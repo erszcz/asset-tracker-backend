@@ -1,11 +1,12 @@
 {application, tracker,
- [{description, "An OTP application"},
+ [{description, "A GPS device tracking backend"},
   {vsn, "0.1.0"},
-  {registered, []},
+  {registered, [tracker_sup]},
   {mod, { tracker_app, []}},
   {applications,
    [kernel,
-    stdlib
+    stdlib,
+    cowboy
    ]},
   {env,[]},
   {modules, []},
