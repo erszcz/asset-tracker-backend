@@ -11,8 +11,9 @@ init({tcp, http}, _Req, _Opts) ->
     {upgrade, protocol, cowboy_websocket}.
 
 websocket_init(_TransportName, Req, _Opts) ->
-    erlang:start_timer(1000, self(), <<"Hello!">>),
-    {ok, Req, undefined_state}.
+    {Device, NewReq} = get_device(Req),
+    erlang:start_timer(1000, self(), <<"Stream for device ", Device/bytes>>),
+    {ok, NewReq, undefined_state}.
 
 websocket_handle({text, Msg}, Req, State) ->
     {reply, {text, << "That's what she said! ", Msg/binary >>}, Req, State};
@@ -27,3 +28,9 @@ websocket_info(_Info, Req, State) ->
 
 websocket_terminate(_Reason, _Req, _State) ->
     ok.
+
+get_device(Req) ->
+    case cowboy_req:binding(device, Req) of
+        undefined -> error(undefined_device, [Req]);
+        Device -> Device
+    end.

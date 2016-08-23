@@ -17,7 +17,7 @@ start(_StartType, _StartArgs) ->
     Routes = [
               {'_', [
                      {"/", cowboy_static, {priv_file, tracker, "index.html"}},
-                     {"/websocket", tr_device_location_stream, []},
+                     {"/device/:device/location-stream", tr_device_location_stream, []},
                      {"/static/[...]", cowboy_static, {priv_dir, tracker, "static"}}
                     ]}
              ],
