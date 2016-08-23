@@ -1,4 +1,4 @@
--module(tr_device_location_stream).
+-module(tr_device_location_ws).
 -behaviour(cowboy_websocket_handler).
 
 -export([init/3]).
