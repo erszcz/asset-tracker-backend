@@ -29,7 +29,7 @@ register_sink(DeviceID, SinkPid) ->
     gen_event:add_sup_handler(Source, {tr_device_location_sink, SinkPid}, []).
 
 start_link() ->
-    gen_event:start_link({local, ?MODULE}).
+    gen_event:start_link().
 
 add_handler(Handler, Args) ->
     gen_event:add_handler(?MODULE, Handler, Args).
