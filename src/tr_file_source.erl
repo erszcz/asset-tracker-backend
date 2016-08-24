@@ -50,7 +50,7 @@ handle_cast(_Msg, State) ->
 
 handle_info(timeout, #{node_pid := NodePid, events := Events,
                        current := Current} = S) ->
-    gen_event:notify(NodePid, lists:nth(Current, Events)),
+    gen_event:notify(NodePid, process_event(lists:nth(Current, Events))),
     {noreply, S#{current := succ(Current, length(Events))}, timeout()};
 
 handle_info(_Info, State) ->
@@ -68,10 +68,19 @@ code_change(_OldVsn, State, _Extra) ->
 
 prepare_events(FileName) ->
     {ok, Data} = file:read_file(FileName),
-    [ <<"event:", E/bytes>> || E <- re:split(Data, <<"event:">>), E /= <<>> ].
+    re:split(Data, <<"\n">>, [trim, notempty]).
 
 succ(N, N) -> 1;
 succ(I, _) -> I + 1.
 
 timeout() ->
     timer:seconds(1).
+
+process_event(BEvent) ->
+    Ev = tr_json:decode(BEvent),
+    tr_json:encode(Ev#{<<"event">> => <<"G">>,
+                       <<"published_at">> := ts()}).
+
+ts() ->
+    TS = ec_date:format_iso8601(qdate:to_date(os:timestamp())),
+    iolist_to_binary(TS).
