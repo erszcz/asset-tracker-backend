@@ -35,7 +35,9 @@ start_link(DeviceID, NodePid) ->
 %% 
 
 init([DeviceID, NodePid]) ->
-    Events = prepare_events("gps-event-stream-clean.txt"),
+    EventsFile = filename:join([code:priv_dir(tracker),
+                                "gps-event-stream-clean.txt"]),
+    Events = prepare_events(EventsFile),
     {ok, #{device_id => DeviceID,
            node_pid => NodePid,
            events => Events,
