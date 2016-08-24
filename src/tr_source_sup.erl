@@ -12,13 +12,13 @@
 start_link(Opts) ->
     supervisor:start_link({local, ?SERVER}, ?MODULE, Opts).
 
-init(_Opts) ->
-    {ok, {flags(), [source_spec()]}}.
+init(Opts) ->
+    {ok, {flags(), [source_spec(Opts)]}}.
 
 flags() ->
     #{strategy => simple_one_for_one}.
 
-source_spec() ->
+source_spec(Opts) ->
     #{id => tr_device_location_source,
-      start => {tr_device_location_source, start_link, []},
+      start => {tr_device_location_source, start_link, [Opts]},
       type => worker}.

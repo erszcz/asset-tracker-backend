@@ -28,7 +28,7 @@ register_sink(DeviceID, SinkPid) ->
     Source = asd123,
     gen_event:add_sup_handler(Source, {tr_device_location_sink, SinkPid}, []).
 
-start_link() ->
+start_link(_Opts) ->
     gen_event:start_link().
 
 add_handler(Handler, Args) ->
