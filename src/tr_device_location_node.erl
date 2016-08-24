@@ -1,9 +1,9 @@
--module(tr_device_location_source).
+-module(tr_device_location_node).
 -behaviour(gen_event).
 
 %% API
 -export([start_link/1,
-         get_existing_source/1,
+         get_existing_node/1,
          init_mapping/0,
          register_sink/2]).
 
@@ -24,19 +24,19 @@
 start_link(_Opts) ->
     gen_event:start_link().
 
-get_existing_source(DeviceID) ->
-    case ets:lookup(tr_device_event_sources, DeviceID) of
-        [] -> error({no_event_source, DeviceID});
-        [{DeviceID, SourcePid}] -> SourcePid
+get_existing_node(DeviceID) ->
+    case ets:lookup(tr_device_event_nodes, DeviceID) of
+        [] -> error({no_event_node, DeviceID});
+        [{DeviceID, NodePid}] -> NodePid
     end.
 
 init_mapping() ->
-    ets:new(tr_device_event_sources, [public, named_table, {read_concurrency, true}]).
+    ets:new(tr_device_event_nodes, [public, named_table, {read_concurrency, true}]).
 
 register_sink(DeviceID, SinkPid) ->
-    Source = get_source(DeviceID),
-    erlang:monitor(process, Source),
-    gen_event:add_sup_handler(Source, {tr_device_location_source, SinkPid}, SinkPid).
+    Node = get_node(DeviceID),
+    erlang:monitor(process, Node),
+    gen_event:add_sup_handler(Node, {tr_device_location_node, SinkPid}, SinkPid).
 
 %%
 %% gen_event callbacks
@@ -133,14 +133,14 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal functions
 %%
 
-get_source(DeviceID) ->
-    Pid = case supervisor:start_child(tr_source_sup, []) of
+get_node(DeviceID) ->
+    Pid = case supervisor:start_child(tr_node_sup, []) of
               {ok, P} -> P;
               {ok, P, _} -> P;
               {error, Reason} -> error(Reason)
           end,
-    case ets:insert_new(tr_device_event_sources, {DeviceID, Pid}) of
-        false -> supervisor:terminate_child(tr_source_sup, Pid),
-                 get_existing_source(DeviceID);
+    case ets:insert_new(tr_device_event_nodes, {DeviceID, Pid}) of
+        false -> supervisor:terminate_child(tr_node_sup, Pid),
+                 get_existing_node(DeviceID);
         true -> Pid
     end.

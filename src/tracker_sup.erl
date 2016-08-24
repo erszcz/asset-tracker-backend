@@ -24,8 +24,8 @@ start_link(Opts) ->
 %%
 
 init(Opts) ->
-    tr_device_location_source:init_mapping(),
-    {ok, {flags(), [tr_source_sup(Opts)]}}.
+    tr_device_location_node:init_mapping(),
+    {ok, {flags(), [tr_node_sup(Opts)]}}.
 
 %%
 %% Internal functions
@@ -34,7 +34,7 @@ init(Opts) ->
 flags() ->
     #{strategy => one_for_one}.
 
-tr_source_sup(Opts) ->
-    #{id => tr_source_sup,
-      start => {tr_source_sup, start_link, [Opts]},
+tr_node_sup(Opts) ->
+    #{id => tr_node_sup,
+      start => {tr_node_sup, start_link, [Opts]},
       type => supervisor}.

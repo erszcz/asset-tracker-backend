@@ -12,7 +12,7 @@ init({tcp, http}, _Req, _Opts) ->
 
 websocket_init(_TransportName, Req, _Opts) ->
     {DeviceID, NewReq} = get_device(Req),
-    tr_device_location_source:register_sink(DeviceID, self()),
+    tr_device_location_node:register_sink(DeviceID, self()),
     {ok, NewReq, undefined_state}.
 
 websocket_handle({text, Msg}, Req, State) ->
