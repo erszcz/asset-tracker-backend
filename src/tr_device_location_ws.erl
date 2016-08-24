@@ -20,8 +20,7 @@ websocket_handle({text, Msg}, Req, State) ->
 websocket_handle(_Data, Req, State) ->
     {ok, Req, State}.
 
-websocket_info({event, _Ref, Msg}, Req, State) ->
-    erlang:start_timer(1000, self(), <<"How' you doin'?">>),
+websocket_info({event, Msg}, Req, State) ->
     {reply, {text, Msg}, Req, State};
 websocket_info(_Info, Req, State) ->
     {ok, Req, State}.
