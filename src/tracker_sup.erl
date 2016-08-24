@@ -24,6 +24,7 @@ start_link(Opts) ->
 %%
 
 init(Opts) ->
+    tr_device_location_source:init_mapping(),
     {ok, {flags(), [tr_source_sup(Opts)]}}.
 
 %%

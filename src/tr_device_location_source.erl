@@ -2,10 +2,10 @@
 -behaviour(gen_event).
 
 %% API
--export([register_sink/2]).
-
--export([start_link/0,
-         add_handler/2]).
+-export([start_link/1,
+         get_existing_source/1,
+         init_mapping/0,
+         register_sink/2]).
 
 %% gen_event callbacks
 -export([init/1,
@@ -15,24 +15,28 @@
          terminate/2,
          code_change/3]).
 
--record(state, {}).
+-type state() :: #{sink => pid()}.
 
 %%
 %% API
 %%
 
-register_sink(DeviceID, SinkPid) ->
-    %% TODO: We are in the context of a sink.
-    %% Monitor the source and ensure we reregister if a source crashes.
-    %Source = get_source(DeviceID),
-    Source = asd123,
-    gen_event:add_sup_handler(Source, {tr_device_location_sink, SinkPid}, []).
-
 start_link(_Opts) ->
     gen_event:start_link().
 
-add_handler(Handler, Args) ->
-    gen_event:add_handler(?MODULE, Handler, Args).
+get_existing_source(DeviceID) ->
+    case ets:lookup(tr_device_event_sources, DeviceID) of
+        [] -> error({no_event_source, DeviceID});
+        [{DeviceID, SourcePid}] -> SourcePid
+    end.
+
+init_mapping() ->
+    ets:new(tr_device_event_sources, [public, named_table, {read_concurrency, true}]).
+
+register_sink(DeviceID, SinkPid) ->
+    Source = get_source(DeviceID),
+    erlang:monitor(process, Source),
+    gen_event:add_sup_handler(Source, {tr_device_location_source, SinkPid}, SinkPid).
 
 %%
 %% gen_event callbacks
@@ -47,8 +51,8 @@ add_handler(Handler, Args) ->
 %% @spec init(Args) -> {ok, State}
 %% @end
 %%--------------------------------------------------------------------
-init([]) ->
-    {ok, #state{}}.
+init(SinkPid) ->
+    {ok, #{sink => SinkPid}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -63,8 +67,9 @@ init([]) ->
 %%                          remove_handler
 %% @end
 %%--------------------------------------------------------------------
-handle_event(_Event, State) ->
-    {ok, State}.
+handle_event(Event, #{sink := Pid} = S) ->
+    Pid ! {event, Event},
+    {ok, S}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -96,8 +101,9 @@ handle_call(_Request, State) ->
 %%                         remove_handler
 %% @end
 %%--------------------------------------------------------------------
-handle_info(_Info, State) ->
-    {ok, State}.
+handle_info(Info, #{sink := Pid} = S) ->
+    Pid ! {info, Info},
+    {ok, S}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -126,3 +132,15 @@ code_change(_OldVsn, State, _Extra) ->
 %%
 %% Internal functions
 %%
+
+get_source(DeviceID) ->
+    Pid = case supervisor:start_child(tr_source_sup, []) of
+              {ok, P} -> P;
+              {ok, P, _} -> P;
+              {error, Reason} -> error(Reason)
+          end,
+    case ets:insert_new(tr_device_event_sources, {DeviceID, Pid}) of
+        false -> supervisor:terminate_child(tr_source_sup, Pid),
+                 get_existing_source(DeviceID);
+        true -> Pid
+    end.

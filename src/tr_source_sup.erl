@@ -21,4 +21,5 @@ flags() ->
 source_spec(Opts) ->
     #{id => tr_device_location_source,
       start => {tr_device_location_source, start_link, [Opts]},
+      restart => temporary,
       type => worker}.

@@ -26,7 +26,7 @@ start(_StartType, _StartArgs) ->
     Dispatch = cowboy_router:compile(Routes),
     {ok, _} = cowboy:start_http(http, 100, [{port, 8080}],
                                 [{env, [{dispatch, Dispatch}]}]),
-    tracker_sup:start_link().
+    tracker_sup:start_link(defaults()).
 
 stop(_State) ->
     ok.
