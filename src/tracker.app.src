@@ -12,7 +12,7 @@
     jsone,
     qdate
    ]},
-  {env,[]},
+  {env,[{listen_port, 9234}]},
   {modules, []},
 
   {maintainers, []},
