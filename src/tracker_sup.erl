@@ -2,7 +2,6 @@
 %% @end
 
 -module(tracker_sup).
-
 -behaviour(supervisor).
 
 %% API
@@ -24,11 +23,17 @@ start_link() ->
 %% Supervisor callbacks
 %%
 
-%% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init([]) ->
-    Procs = [],
-    {ok, { {one_for_one, 10, 10}, Procs }}.
+    {ok, {flags(), [tr_source_sup([])]}}.
 
 %%
 %% Internal functions
 %%
+
+flags() ->
+    #{strategy => one_for_one}.
+
+tr_source_sup(Opts) ->
+    #{id => tr_source_sup,
+      start => {tr_source_sup, start_link, [Opts]},
+      type => supervisor}.

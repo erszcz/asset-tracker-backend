@@ -11,8 +11,8 @@ init({tcp, http}, _Req, _Opts) ->
     {upgrade, protocol, cowboy_websocket}.
 
 websocket_init(_TransportName, Req, _Opts) ->
-    {Device, NewReq} = get_device(Req),
-    erlang:start_timer(1000, self(), <<"Stream for device ", Device/bytes>>),
+    {DeviceID, NewReq} = get_device(Req),
+    tr_device_location_source:register_sink(DeviceID, self()),
     {ok, NewReq, undefined_state}.
 
 websocket_handle({text, Msg}, Req, State) ->
@@ -20,7 +20,7 @@ websocket_handle({text, Msg}, Req, State) ->
 websocket_handle(_Data, Req, State) ->
     {ok, Req, State}.
 
-websocket_info({timeout, _Ref, Msg}, Req, State) ->
+websocket_info({event, _Ref, Msg}, Req, State) ->
     erlang:start_timer(1000, self(), <<"How' you doin'?">>),
     {reply, {text, Msg}, Req, State};
 websocket_info(_Info, Req, State) ->

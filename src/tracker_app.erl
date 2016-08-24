@@ -9,6 +9,8 @@
 -export([start/2,
          stop/1]).
 
+-export([defaults/0]).
+
 %%
 %% API
 %%
@@ -28,6 +30,9 @@ start(_StartType, _StartArgs) ->
 
 stop(_State) ->
     ok.
+
+defaults() ->
+    #{}.
 
 %%
 %% Internal functions
