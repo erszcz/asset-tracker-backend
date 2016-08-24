@@ -142,5 +142,11 @@ get_node(DeviceID) ->
     case ets:insert_new(tr_device_event_nodes, {DeviceID, Pid}) of
         false -> supervisor:terminate_child(tr_node_sup, Pid),
                  get_existing_node(DeviceID);
-        true -> Pid
+        true -> attach_event_source(DeviceID, Pid),
+                Pid
     end.
+
+attach_event_source(DeviceID, NodePid) ->
+    %% TODO: hardcoded source type
+    Source = tr_file_source,
+    supervisor:start_child(tr_source_sup, Source:spec(DeviceID, NodePid)).
