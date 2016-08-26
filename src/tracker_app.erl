@@ -21,6 +21,7 @@ start(_StartType, _StartArgs) ->
                      {"/", cowboy_static, {priv_file, tracker, "index.html"}},
                      {"/device/:device/location-stream", tr_device_location_ws, []},
                      {"/device/:device/location", tr_device_location, []},
+                     {"/devices", tr_devices_handler, []},
                      {"/static/[...]", cowboy_static, {priv_dir, tracker, "static"}}
                     ]}
              ],
