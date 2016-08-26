@@ -79,6 +79,8 @@ handle_cast(_Msg, State) -> {noreply, State}.
 %% @end
 %%--------------------------------------------------------------------
 -spec handle_info(term(), gen_changes_state()) -> {noreply, gen_changes_state()}.
+handle_info({error, {closed, timeout}}, State) ->
+    {stop, stream_end, State};
 handle_info(_Info, State) ->
     {noreply, State}.
 

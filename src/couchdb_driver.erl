@@ -24,8 +24,8 @@
 %% API functions
 
 start_link(_Opts) ->
-    ok = hackney:start(),
-    ok = application:start(couchbeam),
+    %% Just for ./rebar3 shell, release version starts those deps automatically
+    ok = ensure_deps_started(),
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 
@@ -109,3 +109,17 @@ decode_dbname(DBName) ->
     << <<Char:4>> || Char <- [ Char - 97 || <<Char:8>> <= DBName]>>.
 
 
+ensure_deps_started() ->
+    case hackney:start() of
+        ok ->
+            ok;
+        {error, {already_started, _}} ->
+            ok
+    end,
+
+    case application:start(couchbeam) of
+        ok ->
+            ok;
+        {error, {already_started, _}} ->
+            ok
+    end.

@@ -10,7 +10,10 @@
     stdlib,
     cowboy,
     jsone,
-    qdate
+    qdate,
+    lager,
+    couchbeam,
+    jsx
    ]},
   {env,[{listen_port, 9234}]},
   {modules, []},
