@@ -20,6 +20,7 @@ start(_StartType, _StartArgs) ->
               {'_', [
                      {"/", cowboy_static, {priv_file, tracker, "index.html"}},
                      {"/device/:device/location-stream", tr_device_location_ws, []},
+                     {"/device/:device/location", tr_device_location, []},
                      {"/static/[...]", cowboy_static, {priv_dir, tracker, "static"}}
                     ]}
              ],
@@ -27,7 +28,8 @@ start(_StartType, _StartArgs) ->
     {ok, _} = cowboy:start_http(http, 100,
                                 [{port, maps:get(listen_port, opts())}],
                                 [{env, [{dispatch, Dispatch}]}]),
-    tracker_sup:start_link(defaults()).
+    tracker_sup:start_link(defaults()),
+    tr_current_state:start_link().
 
 stop(_State) ->
     ok.
