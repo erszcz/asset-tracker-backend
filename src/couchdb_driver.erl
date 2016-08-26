@@ -123,7 +123,7 @@ server_ref() ->
 
 -spec db_ref(DBName :: dbname()) -> DBRef :: term().
 db_ref(DBName) ->
-    {ok, DBRef} = couchbeam:open_db(server_ref(), encode_dbname(DBName)),
+    {ok, DBRef} = couchbeam:open_db(server_ref(), encode_dbname(DBName), [{recv_timeout, timer:minutes(5)}]),
     DBRef.
 
 -spec encode_dbname(dbname()) -> binary().
