@@ -46,12 +46,16 @@ handle_info(get_token, State) ->
 handle_info(request, State) ->
   try
     Data = get_stream(State),
-    {ok, DeviceId} = maps:find(<<"coreid">>, Data),
-    location_store:register_location(DeviceId, Data),
+      case Data of
+        ok -> ok;
+        _ ->
+          {ok, DeviceId} = maps:find(<<"coreid">>, Data),
+          location_store:register_location(DeviceId, Data)
+      end,
     erlang:send_after(?TIMEDIFF, self(), request, []),
     {noreply, State}
   catch Err:R ->
-    lager:error("Error during sending request ~p~n", [{Err, R}]),
+    lager:error("Error during sending request ~p", [{Err, R}]),
       {stop, {Err, R}, State}
   end.
 
