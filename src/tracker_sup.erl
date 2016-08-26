@@ -25,8 +25,10 @@ start_link(Opts) ->
 
 init(Opts) ->
     tr_device_location_node:init_mapping(),
+    lager:start(),
     {ok, {flags(), [tr_node_sup(Opts),
-                    tr_source_sup(Opts)]}}.
+                    tr_source_sup(Opts),
+                    couchdb_driver_sup(Opts)]}}.
 
 %%
 %% Internal functions
@@ -44,3 +46,17 @@ tr_source_sup(Opts) ->
     #{id => tr_source_sup,
       start => {tr_source_sup, start_link, [Opts]},
       type => supervisor}.
+
+couchdb_driver_sup(Opts) ->
+    #{
+        id      => couchdb_driver_sup,
+        start   => {couchdb_driver_sup, start_link, [Opts]},
+        type    => supervisor
+    }.
+
+couchbeam_app() ->
+    #{
+        id      => couchbeam_app,
+        start   => {couchbeam_app, start, [normal, []]},
+        type    => supervisor
+    }.
