@@ -36,21 +36,26 @@ handle_info(get_token, State) ->
   TokenMap = get_token(User, Pass),
   case TokenMap of
     {error, _, R} ->
-      lager:error("Error during authentication!~n"),
+      lager:error("Error during authentication!"),
       {stop, {bad_resposne, R}, State};
     Token ->
-      lager:info("Successfully authenticated!~n"),
+      lager:info("Successfully authenticated for user ~p!", [User]),
       erlang:send_after(?TIMEDIFF, self(), request, []),
       {noreply, maps:merge(State, Token)}
   end;
 handle_info(request, State) ->
   try
     Data = get_stream(State),
-    io:format("request data ~n~p", [Data]),
+      case Data of
+        ok -> ok;
+        _ ->
+          {ok, DeviceId} = maps:find(<<"coreid">>, Data),
+          location_store:register_location(DeviceId, Data)
+      end,
     erlang:send_after(?TIMEDIFF, self(), request, []),
     {noreply, State}
   catch Err:R ->
-    lager:error("Error during sending request ~p~n", [{Err, R}]),
+    lager:error("Error during sending request ~p", [{Err, R}]),
       {stop, {Err, R}, State}
   end.
 
