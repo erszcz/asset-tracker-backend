@@ -4,7 +4,7 @@
 
 %% API
 -export([
-    start_link/1, list_dbs/0, save_doc/2, list_docs/2, db_ref/1, create_db/1
+    start_link/1, list_dbs/0, save_doc/2, save_doc/3, list_docs/2, db_ref/1, create_db/1, get_doc/1, get_doc/2
 ]).
 
 %% gen_server callbacks
@@ -17,6 +17,7 @@
 ]).
 
 -define(SERVER, ?MODULE).
+-define(DEVICES_DB, <<"devices">>).
 
 %% Local types
 -type simple_doc() :: #{binary() => binary()}.
@@ -25,6 +26,8 @@
 %% API functions
 
 start_link(_Opts) ->
+    Res = create_db(?DEVICES_DB),
+    lager:info("Create ~p", [{?DEVICES_DB, Res}]),
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 
@@ -42,18 +45,34 @@ list_dbs() ->
     end.
 
 save_doc(DBName, Doc) ->
+    save_doc(DBName, gen_uuid(), Doc).
+save_doc(DBName, UUID, Doc) ->
     DBRef = db_ref(DBName),
-    RawDoc = {maps:to_list(Doc)},
+    RawDoc = {maps:to_list(Doc#{<<"_id">> => UUID})},
     case couchbeam:save_doc(DBRef, RawDoc) of
         {ok, _} ->
             ok;
         {error, not_found} ->
-            {ok, _} = couchbeam:create_db(server_ref(), encode_dbname(DBName)),
-            save_doc(DBName, Doc);
+            {ok, _} = create_db(DBName),
+            save_doc(DBName, UUID, Doc);
         {error, Reason} ->
-            lager:info("save_doc error ~p", [{encode_dbname(DBName), Reason}]),
+            lager:error("save_doc error ~p", [{encode_dbname(DBName), Reason}]),
             {error, Reason}
     end.
+
+get_doc(DocId) ->
+    get_doc(?DEVICES_DB, DocId).
+get_doc(DBName, DocId) ->
+    DBRef = db_ref(DBName),
+    case couchbeam:open_doc(DBRef, DocId) of
+        {ok, {DocElements}} ->
+            DocMap0 = maps:from_list(DocElements),
+            DocMap1 = maps:remove(<<"_id">>, DocMap0),
+            {ok, maps:remove(<<"_rev">>, DocMap1)};
+        {error, Reason} ->
+            {error, Reason}
+    end.
+
 
 -spec list_docs(DBName :: dbname(), Limit :: non_neg_integer()) ->
     {ok, [simple_doc()]} | {error, Reason :: any()}.
@@ -114,3 +133,6 @@ encode_dbname(Bin) ->
 -spec decode_dbname(binary()) -> dbname().
 decode_dbname(DBName) ->
     << <<Char:4>> || Char <- [ Char - 97 || <<Char:8>> <= DBName]>>.
+
+gen_uuid() ->
+    base64:encode(crypto:strong_rand_bytes(16)).

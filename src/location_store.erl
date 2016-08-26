@@ -5,6 +5,7 @@
 
 %% API
 -export([get_devices/0, register_location/2, get_current_locations/2]).
+-export([set_device_name/2, get_device_name/1]).
 
 -spec get_devices() ->
     {ok, [binary()]} | {error, Reason :: any()}.
@@ -21,3 +22,19 @@ register_location(DeviceId, Attributes) ->
 get_current_locations(DeviceId, Limit) when Limit > 0 ->
     couchdb_driver:list_docs(DeviceId, Limit).
 
+
+-spec set_device_name(DeviceId :: binary(), Name :: binary()) ->
+    ok | {error, Reason :: term()}.
+set_device_name(DeviceId, Name) ->
+    couchdb_driver:save_doc(<<"devices">>, DeviceId, #{<<"name">> => Name}).
+
+
+-spec get_device_name(DeviceId :: binary()) ->
+    {ok, Name :: binary()} | {error, not_found} | {error, Reason :: term()}.
+get_device_name(DeviceId) ->
+    case couchdb_driver:get_doc(<<"devices">>, DeviceId) of
+        {ok, #{<<"name">> := Name}} ->
+            {ok, Name};
+        {error, Reason} ->
+            {error, Reason}
+    end .
