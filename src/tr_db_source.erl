@@ -18,14 +18,16 @@ spec(DeviceID, NodePid) ->
     #{id => {?MODULE, DeviceID},
         start => {?MODULE, start_link, [DeviceID, NodePid]},
         restart => transient,
-
         type => worker}.
 
 start_link(DeviceID, NodePid) ->
     DBRef = couchdb_driver:db_ref(DeviceID),
-    Opts = [{<<"include_docs">>, <<"true">>}, {<<"descending">>, <<"true">>}],
     lager:info("Starting DB source: ~p", [{DeviceID, DBRef}]),
     couchdb_driver:create_db(DeviceID),
+    {ok, {InfoList}} = couchbeam:db_info(couchdb_driver:db_ref(DeviceID)),
+    Since0 = proplists:get_value(<<"update_seq">>, InfoList),
+    Since = max(0, Since0 - 30),
+    Opts = [{<<"include_docs">>, <<"true">>}, {since, Since}],
     gen_changes:start_link(?MODULE, DBRef, Opts, [DeviceID, NodePid]).
 
 %%
