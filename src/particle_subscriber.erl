@@ -36,10 +36,10 @@ handle_info(get_token, State) ->
   TokenMap = get_token(User, Pass),
   case TokenMap of
     {error, _, R} ->
-      lager:info("Error during authentication!~n"),
+      lager:error("Error during authentication!~n"),
       {stop, {bad_resposne, R}, State};
     Token ->
-%%      lager:info("Successfully authenticated!~n"),
+      lager:info("Successfully authenticated!~n"),
       erlang:send_after(?TIMEDIFF, self(), request, []),
       {noreply, maps:merge(State, Token)}
   end;
@@ -50,7 +50,7 @@ handle_info(request, State) ->
     erlang:send_after(?TIMEDIFF, self(), request, []),
     {noreply, State}
   catch Err:R ->
-  %  lager:error("Error during sending request ~p~n", [{Err, R}],
+    lager:error("Error during sending request ~p~n", [{Err, R}]),
       {stop, {Err, R}, State}
   end.
 
