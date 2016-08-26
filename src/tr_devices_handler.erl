@@ -25,8 +25,8 @@ to_json(Req0, State) ->
     {Limit, Req2} = cowboy_req:qs_val(<<"limit">>, Req1, <<"1">>),
 % TODO: Uncommenct this line to get queries from real DB
 % TODO: DevicesList = get_devices(Limit),
-    TestDevices = [get_sample_device(<<"rower">>),
-               get_sample_device(<<"pies">>)],
+    TestDevices = [get_sample_device(<<"rower">>, <<"50.066902,19.929014">>),
+               get_sample_device(<<"pies">>, <<"52.066902,20.929014">>)],
     Reply = get_reply(TestDevices, IsPretty),
     {Reply, Req2, State}.
 
@@ -51,9 +51,9 @@ get_reply(DevicesList, <<"true">>) ->
 get_reply(DevicesList, _) ->
     tr_json:encode(DevicesList).
 
-get_sample_device(Name) ->
+get_sample_device(Name, Data) ->
     #{<<"display_name">> => Name,
-      <<"data">> => <<"50.066902,19.929014">>,
+      <<"data">> => Data,
       <<"ttl">> => <<"60">>,
       <<"published_at">> => <<"2016-08-17T10:28:03.512Z">>,
       <<"coreid">> => <<"4f0047001951343334363036">>}.
