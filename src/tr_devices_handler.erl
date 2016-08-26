@@ -7,6 +7,8 @@
          content_types_provided/2,
          to_json/2]).
 
+-define(LIMIT, 1).
+
 init({tcp, http}, _Req, _Opts) ->
     {upgrade, protocol, cowboy_rest}.
 
@@ -22,28 +24,35 @@ content_types_provided(Req, State) ->
 
 to_json(Req0, State) ->
     {IsPretty, Req1} = cowboy_req:qs_val(<<"pretty">>, Req0),
-    {Limit, Req2} = cowboy_req:qs_val(<<"limit">>, Req1, <<"1">>),
-% TODO: Uncommenct this line to get queries from real DB
-% TODO: DevicesList = get_devices(Limit),
-    TestDevices = [get_sample_device(<<"rower">>, <<"50.066902,19.929014">>),
-               get_sample_device(<<"pies">>, <<"52.066902,20.929014">>)],
-    Reply = get_reply(TestDevices, IsPretty),
-    {Reply, Req2, State}.
+    DevicesList = get_devices(?LIMIT),
+%    TestDevices = [get_sample_device(<<"rower">>),
+%               get_sample_device(<<"pies">>)],
+    Reply = get_reply(DevicesList, IsPretty),
+    {Reply, Req1, State}.
 
 %% Internal
 
-get_devices(LimitBin) ->
-    Limit = erlang:binary_to_integer(LimitBin),
-    {ok, Devices} = location_store:get_devices(),
-    get_devices_with_location(Devices, Limit).
+get_devices(Limit) ->
+    {ok, Devices1} = location_store:get_devices(),
+    Devices2 = lists:filter(
+                 fun(DBName) ->
+                         (DBName =/= <<225,79,184,32,62,1:4>>) and
+                         (DBName =/= <<228,36,18>>) and
+                         (DBName =/= <<"123">>)
+                 end,
+                 Devices1),
+    get_devices_with_location(Devices2, Limit).
 
 get_devices_with_location(Devices, Limit) ->
-    Locations = lists:map(
-                  fun(Device) ->
-                          location_store:get_current_locations(Device, Limit)
-                  end,
-                  Devices),
-    lists:zip(Devices, Locations).
+    lists:map(
+      fun(Device) ->
+              {ok, [Location]} = location_store:get_current_locations(Device, Limit),
+              DeviceName = <<"pies">>,
+              Result = maps:put(<<"display_name">>, DeviceName, Location),
+              lager:info("~n ~n ~p ~n ~n", [Result]),
+              Result
+      end,
+      Devices).
 
 get_reply(DevicesList, <<"true">>) ->
     tr_json:pretty_encode(DevicesList);
@@ -51,9 +60,9 @@ get_reply(DevicesList, <<"true">>) ->
 get_reply(DevicesList, _) ->
     tr_json:encode(DevicesList).
 
-get_sample_device(Name, Data) ->
+get_sample_device(Name) ->
     #{<<"display_name">> => Name,
-      <<"data">> => Data,
+      <<"data">> => <<"50.066902,19.929014">>,
       <<"ttl">> => <<"60">>,
       <<"published_at">> => <<"2016-08-17T10:28:03.512Z">>,
       <<"coreid">> => <<"4f0047001951343334363036">>}.
