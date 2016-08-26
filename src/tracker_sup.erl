@@ -28,7 +28,8 @@ init(Opts) ->
     lager:start(),
     {ok, {flags(), [tr_node_sup(Opts),
                     tr_source_sup(Opts),
-                    couchdb_driver_sup(Opts)]}}.
+                    couchdb_driver_sup(Opts),
+                    tr_turbo_subscriber(Opts)]}}.
 
 %%
 %% Internal functions
@@ -54,9 +55,8 @@ couchdb_driver_sup(Opts) ->
         type    => supervisor
     }.
 
-couchbeam_app() ->
-    #{
-        id      => couchbeam_app,
-        start   => {couchbeam_app, start, [normal, []]},
-        type    => supervisor
-    }.
+tr_turbo_subscriber(Opts) ->
+  #{id => subscriber,
+    start => {particle_subscriber, start_link, [Opts]},
+    type => worker}.
+

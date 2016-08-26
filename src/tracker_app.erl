@@ -4,7 +4,9 @@
 -module(tracker_app).
 
 -behaviour(application).
-
+%% set your particle login and password to those os variables
+-define(LOGIN_ENV, "LOGIN_ENV").
+-define(PASS_ENV, "PASS_ENV").
 %% Application callbacks
 -export([start/2,
          stop/1]).
@@ -32,6 +34,9 @@ start(_StartType, _StartArgs) ->
     tracker_sup:start_link(defaults()),
     tr_current_state:start_link().
 
+
+
+
 stop(_State) ->
     ok.
 
@@ -39,7 +44,7 @@ defaults() ->
     #{listen_port => 7890}.
 
 opts() ->
-    opts([]).
+    opts([{login, get_login()}, {pass, get_pass()}]).
 
 opts(LOverrides) ->
     Overrides = maps:from_list(LOverrides),
@@ -49,3 +54,18 @@ opts(LOverrides) ->
 %%
 %% Internal functions
 %%
+
+get_login() ->
+  get_var(?LOGIN_ENV).
+
+get_pass() ->
+  get_var(?PASS_ENV).
+
+get_var(Var) ->
+  case os:getenv(Var) of
+    false ->
+%%      lager:error("Variable ~p is not set", [Var]),
+      throw({variable_not_set, Var});
+    Val ->
+      Val
+  end.
