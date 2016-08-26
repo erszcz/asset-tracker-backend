@@ -48,15 +48,18 @@ handle_info(request, State) ->
     Data = get_stream(State),
       case Data of
         ok -> ok;
-        _ ->
+        {error, Name, R} ->
+          lager:warning("Unknown data ~p:~p!",[Name, R]),
+          ok;
+        Other when is_map(Other)->
           {ok, DeviceId} = maps:find(<<"coreid">>, Data),
           location_store:register_location(DeviceId, Data)
       end,
     erlang:send_after(?TIMEDIFF, self(), request, []),
     {noreply, State}
-  catch Err:R ->
-    lager:error("Error during sending request ~p", [{Err, R}]),
-      {stop, {Err, R}, State}
+  catch Err:Reason ->
+    lager:error("Error during sending request ~p", [{Err, Reason}]),
+    {stop, {Err, Reason}, State}
   end.
 
 terminate(Reason, State) ->
@@ -83,12 +86,7 @@ list_devices(State) ->
 get_stream(State) ->
   D = accessed_request(?EVENTS, "GET", [], [], State),
   {ok, {_, _, Body, _ , _}} = D,
-  case Body of
-    <<":ok\n\n\n">> ->
-      ok;
-    _ ->
-      get_response_body_raw(D)
-  end.
+  get_response_body_raw(D).
 
 %% internals: encoding x-www-form-urlencoded type
 url_encode(Data) ->
@@ -117,12 +115,12 @@ get_response_body_json(Response) ->
 get_response_body_raw(Response) ->
   {ok, {_, _, Body, _ , _}} = Response,
   BodyList = binary_to_list(Body),
-  Start = string:str(BodyList, "{"),
-  End = string:str(BodyList, "}"),
-  case {Start, End} of
-    {0, 0} -> {error, no_json, BodyList};
+  Stripped = re:replace(BodyList, "\\s+", "", [global,{return,list}]),
+  Start = string:str(Stripped, "{\"data\":"),
+  case Start of
+    0 -> {error, no_json, BodyList};
     _ ->
-      Bin = list_to_binary(string:sub_string(BodyList, Start, End)),
+      Bin = list_to_binary(string:sub_string(Stripped, Start)),
       tr_json:decode(Bin)
   end.
 
@@ -146,9 +144,3 @@ accessed_request(Path, Method, Headers, Body, TokenMap) ->
   {ok, AccessToken} = maps:find(<<"access_token">>, TokenMap),
   AccessedPath = list_to_binary(binary_to_list(Path) ++ "?access_token=" ++ binary_to_list(AccessToken)),
   request(AccessedPath, Method, Headers, Body).
-
-
-
-
-
-
