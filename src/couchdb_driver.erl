@@ -4,7 +4,7 @@
 
 %% API
 -export([
-    start_link/1, list_dbs/0, save_doc/2, list_docs/2, db_ref/1
+    start_link/1, list_dbs/0, save_doc/2, list_docs/2, db_ref/1, create_db/1
 ]).
 
 %% gen_server callbacks
@@ -17,19 +17,22 @@
 ]).
 
 -define(SERVER, ?MODULE).
--type state() :: #{
-    server => term()
-}.
+
+%% Local types
+-type simple_doc() :: #{binary() => binary()}.
+-type dbname() :: binary().
 
 %% API functions
 
 start_link(_Opts) ->
-    %% Just for ./rebar3 shell, release version starts those deps automatically
-    ok = ensure_deps_started(),
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 
--spec list_dbs() -> {ok, [binary()]} | no_return().
+create_db(DBName) ->
+    couchbeam:create_db(server_ref(), encode_dbname(DBName)).
+
+
+-spec list_dbs() -> {ok, [dbname()]} | no_return().
 list_dbs() ->
     case couchbeam:all_dbs(server_ref()) of
         {ok, DBList} ->
@@ -52,7 +55,8 @@ save_doc(DBName, Doc) ->
             {error, Reason}
     end.
 
-
+-spec list_docs(DBName :: dbname(), Limit :: non_neg_integer()) ->
+    {ok, [simple_doc()]} | {error, Reason :: any()}.
 list_docs(DBName, Limit) ->
     case couchbeam_changes:follow_once(db_ref(DBName), [{descending, true}, include_docs, {limit, Limit}]) of
         {ok, _, Docs} ->
@@ -91,35 +95,22 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 
+-spec server_ref() -> ServerRef :: term().
 server_ref() ->
     %% @todo: make this URL configurable
     Url = "http://localhost:5984",
     Options = [],
     couchbeam:server_connection(Url, Options).
 
+-spec db_ref(DBName :: dbname()) -> DBRef :: term().
 db_ref(DBName) ->
     {ok, DBRef} = couchbeam:open_db(server_ref(), encode_dbname(DBName)),
     DBRef.
 
-
+-spec encode_dbname(dbname()) -> binary().
 encode_dbname(Bin) ->
     list_to_binary([ 97 + Char || <<Char:4>> <= Bin]).
 
+-spec decode_dbname(binary()) -> dbname().
 decode_dbname(DBName) ->
     << <<Char:4>> || Char <- [ Char - 97 || <<Char:8>> <= DBName]>>.
-
-
-ensure_deps_started() ->
-    case hackney:start() of
-        ok ->
-            ok;
-        {error, {already_started, _}} ->
-            ok
-    end,
-
-    case application:start(couchbeam) of
-        ok ->
-            ok;
-        {error, {already_started, _}} ->
-            ok
-    end.

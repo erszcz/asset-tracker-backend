@@ -18,11 +18,14 @@ spec(DeviceID, NodePid) ->
     #{id => {?MODULE, DeviceID},
         start => {?MODULE, start_link, [DeviceID, NodePid]},
         restart => transient,
+
         type => worker}.
 
 start_link(DeviceID, NodePid) ->
     DBRef = couchdb_driver:db_ref(DeviceID),
     Opts = [{<<"include_docs">>, <<"true">>}, {<<"descending">>, <<"true">>}],
+    lager:error("Connect changes: ~p", [{DeviceID, DBRef}]),
+    couchdb_driver:create_db(DeviceID),
     gen_changes:start_link(?MODULE, DBRef, Opts, [DeviceID, NodePid]).
 
 %%
@@ -44,7 +47,7 @@ handle_change({change, {ChangeProplist}}, State = #{node_pid := NodePid}) ->
     DocMap0 = maps:from_list(RawDoc),
     DocMap1 = maps:remove(<<"_id">>, DocMap0),
     DocMap2 = maps:remove(<<"_rev">>, DocMap1),
-
+    lager:info("Change: ~p", [DocMap2]),
     gen_event:notify(NodePid, process_event(DocMap2)),
 
     {noreply, State};
