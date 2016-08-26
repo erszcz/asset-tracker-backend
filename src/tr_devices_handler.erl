@@ -23,7 +23,8 @@ content_types_provided(Req, State) ->
 to_json(Req0, State) ->
     {IsPretty, Req1} = cowboy_req:qs_val(<<"pretty">>, Req0),
     {Limit, Req2} = cowboy_req:qs_val(<<"limit">>, Req1, <<"1">>),
-%    DevicesList = get_devices(Limit),
+% TODO: Uncommenct this line to get queries from real DB
+% TODO: DevicesList = get_devices(Limit),
     TestDevices = [get_sample_device(<<"rower">>),
                get_sample_device(<<"pies">>)],
     Reply = get_reply(TestDevices, IsPretty),
