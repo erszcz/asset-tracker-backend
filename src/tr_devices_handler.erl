@@ -38,6 +38,7 @@ get_devices(Limit) ->
                  fun(DBName) ->
                          (DBName =/= <<225,79,184,32,62,1:4>>) and
                          (DBName =/= <<228,36,18>>) and
+                         (DBName =/= <<"devices">>) and
                          (DBName =/= <<"123">>)
                  end,
                  Devices1),
@@ -47,9 +48,11 @@ get_devices_with_location(Devices, Limit) ->
     lists:map(
       fun(Device) ->
               {ok, [Location]} = location_store:get_current_locations(Device, Limit),
-              DeviceName = <<"pies">>,
+              DeviceName = case location_store:get_device_name(Device) of
+                               {error, _} -> <<"unknown">>;
+                               {ok, Name} -> Name
+                           end,
               Result = maps:put(<<"display_name">>, DeviceName, Location),
-              lager:info("~n ~n ~p ~n ~n", [Result]),
               Result
       end,
       Devices).
