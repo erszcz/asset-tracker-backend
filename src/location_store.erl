@@ -20,3 +20,4 @@ register_location(DeviceId, Attributes) ->
     {ok, [device_attributes()]} | {error, Reason :: any()}.
 get_current_locations(DeviceId, Limit) when Limit > 0 ->
     couchdb_driver:list_docs(DeviceId, Limit).
+

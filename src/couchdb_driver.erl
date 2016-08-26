@@ -55,7 +55,19 @@ save_doc(DBName, Doc) ->
 
 
 list_docs(DBName, Limit) ->
-    couchbeam_changes:follow_once(db_ref(DBName), [{include_docs, true}, {limit, Limit}]).
+    case couchbeam_changes:follow_once(db_ref(DBName), [include_docs, {limit, Limit}]) of
+        {ok, _, Docs} ->
+            DocMaps = lists:map(
+                fun({RawDoc}) ->
+                    {DocElements} = proplists:get_value(<<"doc">>, RawDoc),
+                    DocMap0 = maps:from_list(DocElements),
+                    DocMap1 = maps:remove(<<"_id">>, DocMap0),
+                    maps:remove(<<"_rev">>, DocMap1)
+                end, Docs),
+            {ok, DocMaps};
+        {error, Reason} ->
+            {error, Reason}
+    end.
 
 
 %% gen_server callbacks
