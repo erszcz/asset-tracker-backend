@@ -4,7 +4,7 @@
 
 %% API
 -export([
-    start_link/1, list_dbs/0, save_doc/2
+    start_link/1, list_dbs/0, save_doc/2, list_docs/2
 ]).
 
 %% gen_server callbacks
@@ -24,8 +24,7 @@
 %% API functions
 
 start_link(_Opts) ->
-%%    couchbeam_app:start([], []),
-    hackney:start(),
+    ok = hackney:start(),
     ok = application:start(couchbeam),
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
@@ -40,7 +39,7 @@ list_dbs() ->
     end.
 
 save_doc(DBName, Doc) ->
-    {ok, DBRef} = couchbeam:open_db(server_ref(), encode_dbname(DBName)),
+    DBRef = db_ref(DBName),
     DocID = gen_uuid(),
     RawDoc = {maps:to_list(Doc#{<<"_id">> => DocID})},
     case couchbeam:save_doc(DBRef, RawDoc) of
@@ -54,6 +53,9 @@ save_doc(DBName, Doc) ->
             {error, Reason}
     end.
 
+
+list_docs(DBName, Limit) ->
+    couchbeam_changes:follow_once(db_ref(DBName), [{include_docs, true}, {limit, Limit}]).
 
 
 %% gen_server callbacks
@@ -83,6 +85,10 @@ server_ref() ->
     Url = "http://localhost:5984",
     Options = [],
     couchbeam:server_connection(Url, Options).
+
+db_ref(DBName) ->
+    {ok, DBRef} = couchbeam:open_db(server_ref(), encode_dbname(DBName)),
+    DBRef.
 
 
 gen_uuid() ->
