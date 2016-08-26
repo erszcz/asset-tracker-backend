@@ -1,3 +1,4 @@
+{"1.1.0",
 [{<<"certifi">>,{pkg,<<"certifi">>,<<"0.4.0">>},2},
  {<<"cf">>,{pkg,<<"cf">>,<<"0.2.1">>},2},
  {<<"couchbeam">>,{pkg,<<"couchbeam">>,<<"1.3.1">>},0},
@@ -10,6 +11,7 @@
        {ref,"0a428471aefb3a38207c2141249181e6c018e565"}},
   0},
  {<<"goldrush">>,{pkg,<<"goldrush">>,<<"0.1.8">>},1},
+ {<<"gun">>,{pkg,<<"gun">>,<<"1.0.0-pre.1">>},1},
  {<<"hackney">>,{pkg,<<"hackney">>,<<"1.6.0">>},1},
  {<<"idna">>,{pkg,<<"idna">>,<<"1.2.0">>},2},
  {<<"jsone">>,{pkg,<<"jsone">>,<<"1.2.6">>},0},
@@ -19,4 +21,30 @@
  {<<"mimerl">>,{pkg,<<"mimerl">>,<<"1.0.2">>},2},
  {<<"qdate">>,{pkg,<<"qdate">>,<<"0.4.3">>},0},
  {<<"ranch">>,{pkg,<<"ranch">>,<<"1.2.1">>},1},
- {<<"ssl_verify_fun">>,{pkg,<<"ssl_verify_fun">>,<<"1.1.0">>},2}].
+ {<<"shotgun">>,
+  {git,"git://github.com/inaka/shotgun.git",
+       {ref,"305d3003b22840a310aab033334420df2a88efee"}},
+  0},
+ {<<"ssl_verify_fun">>,{pkg,<<"ssl_verify_fun">>,<<"1.1.0">>},2}]}.
+[
+{pkg_hash,[
+ {<<"certifi">>, <<"A7966EFB868B179023618D29A407548F70C52466BF1849B9E8EBD0E34B7EA11F">>},
+ {<<"cf">>, <<"69D0B1349FD4D7D4DC55B7F407D29D7A840BF9A1EF5AF529F1EBE0CE153FC2AB">>},
+ {<<"couchbeam">>, <<"05B434733FD8C5E65822C946F04E2ECB51BB1D116E1AD9A313D240A55B179700">>},
+ {<<"cowboy">>, <<"A324A8DF9F2316C833A470D918AAF73AE894278B8AA6226CE7A9BF699388F878">>},
+ {<<"cowlib">>, <<"9D769A1D062C9C3AC753096F868CA121E2730B9A377DE23DEC0F7E08B1DF84EE">>},
+ {<<"erlang_localtime">>, <<"497DFD4D13523D3E0EECDCB8D6D59857CF642A17A6BDC6133FF906FDAF2AEF21">>},
+ {<<"erlware_commons">>, <<"721F902031D0313E192FD4038C326F89415855CD1A5CF804AB04B314D0944146">>},
+ {<<"goldrush">>, <<"2024BA375CEEA47E27EA70E14D2C483B2D8610101B4E852EF7F89163CDB6E649">>},
+ {<<"gun">>, <<"28514327A7572234633E127C1C14C5D91991BC26EC16D3707F05962A31F0C1B5">>},
+ {<<"hackney">>, <<"8D1E9440C9EDF23BF5E5E2FE0C71DE03EB265103B72901337394C840EEC679AC">>},
+ {<<"idna">>, <<"AC62EE99DA068F43C50DC69ACF700E03A62A348360126260E87F2B54ECED86B2">>},
+ {<<"jsone">>, <<"3EED1BC3F34D5727A011AB84A20230F4BDD8BB2B9C07C3AD0DCF412410231A74">>},
+ {<<"jsx">>, <<"749BEC6D205C694AE1786D62CEA6CC45A390437E24835FD16D12D74F07097727">>},
+ {<<"lager">>, <<"EEF4E18B39E4195D37606D9088EA05BF1B745986CF8EC84F01D332456FE88D17">>},
+ {<<"metrics">>, <<"25F094DEA2CDA98213CECC3AEFF09E940299D950904393B2A29D191C346A8486">>},
+ {<<"mimerl">>, <<"993F9B0E084083405ED8252B99460C4F0563E41729AB42D9074FD5E52439BE88">>},
+ {<<"qdate">>, <<"6037343CAA1EF8BA8AF13AFD5A2A89CE7695C1E8A12D87702D66624290E3BE76">>},
+ {<<"ranch">>, <<"A6FB992C10F2187B46FFD17CE398DDF8A54F691B81768F9EF5F461EA7E28C762">>},
+ {<<"ssl_verify_fun">>, <<"EDEE20847C42E379BF91261DB474FFBE373F8ACB56E9079ACB6038D4E0BF414F">>}]}
+].
