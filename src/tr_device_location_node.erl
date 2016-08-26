@@ -68,6 +68,7 @@ init(SinkPid) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_event(Event, #{sink := Pid} = S) ->
+    tr_current_state:store_event(Event),
     Pid ! {event, Event},
     {ok, S}.
 
