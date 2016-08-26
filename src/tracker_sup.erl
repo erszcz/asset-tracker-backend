@@ -53,10 +53,3 @@ couchdb_driver_sup(Opts) ->
         start   => {couchdb_driver_sup, start_link, [Opts]},
         type    => supervisor
     }.
-
-couchbeam_app() ->
-    #{
-        id      => couchbeam_app,
-        start   => {couchbeam_app, start, [normal, []]},
-        type    => supervisor
-    }.

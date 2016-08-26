@@ -4,7 +4,7 @@
 
 %% API
 -export([
-    start_link/1, list_dbs/0, save_doc/2, list_docs/2, db_ref/1
+    start_link/1, list_dbs/0, save_doc/2, list_docs/2, db_ref/1, create_db/1
 ]).
 
 %% gen_server callbacks
@@ -26,6 +26,10 @@
 
 start_link(_Opts) ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+
+
+create_db(DBName) ->
+    couchbeam:create_db(server_ref(), encode_dbname(DBName)).
 
 
 -spec list_dbs() -> {ok, [dbname()]} | no_return().

@@ -16,4 +16,8 @@ init(Opts) ->
     {ok, {flags(), []}}.
 
 flags() ->
-    #{strategy => one_for_one}.
+    #{
+        strategy => one_for_one,
+        period => 60,
+        intensity => 10000
+    }.
