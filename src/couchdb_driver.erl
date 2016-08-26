@@ -4,7 +4,7 @@
 
 %% API
 -export([
-    start_link/1, list_dbs/0, save_doc/2, list_docs/2
+    start_link/1, list_dbs/0, save_doc/2, list_docs/2, db_ref/1
 ]).
 
 %% gen_server callbacks
@@ -40,8 +40,7 @@ list_dbs() ->
 
 save_doc(DBName, Doc) ->
     DBRef = db_ref(DBName),
-    DocID = gen_uuid(),
-    RawDoc = {maps:to_list(Doc#{<<"_id">> => DocID})},
+    RawDoc = {maps:to_list(Doc)},
     case couchbeam:save_doc(DBRef, RawDoc) of
         {ok, _} ->
             ok;
@@ -55,7 +54,7 @@ save_doc(DBName, Doc) ->
 
 
 list_docs(DBName, Limit) ->
-    case couchbeam_changes:follow_once(db_ref(DBName), [include_docs, {limit, Limit}]) of
+    case couchbeam_changes:follow_once(db_ref(DBName), [{descending, true}, include_docs, {limit, Limit}]) of
         {ok, _, Docs} ->
             DocMaps = lists:map(
                 fun({RawDoc}) ->
@@ -102,9 +101,6 @@ db_ref(DBName) ->
     {ok, DBRef} = couchbeam:open_db(server_ref(), encode_dbname(DBName)),
     DBRef.
 
-
-gen_uuid() ->
-    base64:encode(crypto:strong_rand_bytes(32)).
 
 encode_dbname(Bin) ->
     list_to_binary([ 97 + Char || <<Char:4>> <= Bin]).

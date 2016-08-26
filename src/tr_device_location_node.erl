@@ -148,5 +148,5 @@ get_node(DeviceID) ->
 
 attach_event_source(DeviceID, NodePid) ->
     %% TODO: hardcoded source type
-    Source = tr_file_source,
+    Source = tr_db_source,
     supervisor:start_child(tr_source_sup, Source:spec(DeviceID, NodePid)).
