@@ -74,7 +74,7 @@ handle_info(request, State) ->
 handle_info(get_name, State) ->
   [Devices] = list_devices(State),
   {ok, Name} = maps:find(<<"name">>, Devices),
-  location_store:set_device_name(Name),
+  %location_store:set_device_name(Name),
   erlang:send_after(?TIMEDIFF, self(), request, []),
   {noreply, State}.
 
