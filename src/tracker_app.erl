@@ -11,7 +11,7 @@
 -export([start/2,
          stop/1]).
 
--export([defaults/0]).
+-export([opts/0]).
 
 %%
 %% API

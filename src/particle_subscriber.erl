@@ -8,13 +8,16 @@
 %%%-------------------------------------------------------------------
 -module(particle_subscriber).
 -author("ludwikbukowski").
--define(TIMEDIFF, 5000).
--define(PARTICLE, "https://api.particle.io").
+-define(TIMEDIFF, 10).
+-define(PARTICLE, "api.particle.io").
+-define(PARTICLE_HTTPS, "https://api.particle.io").
 -define(TOKEN, <<"/oauth/token/">>).
--define(EVENTS, <<"/v1/devices/events/G/">>).
+-define(EVENTS, <<"/v1/devices/events/G">>).
+-define(EVENTS_SSE, <<"https://api.particle.io/v1/devices/events/G/">>).
 -define(LIST, <<"/v1/devices/">>).
 %% API
--export([handle_info/2, handle_cast/3, handle_call/3, init/1, start_link/1, terminate/2]).
+-export([handle_info/2, handle_cast/3, handle_call/3, init/1, start_link/1, terminate/2, list_devices/1,
+  handle_event/3, sse_process/1]).
 
 %% gen_server callbacks
 start_link(Opts) ->
@@ -40,27 +43,40 @@ handle_info(get_token, State) ->
       {stop, {bad_resposne, R}, State};
     Token ->
       lager:info("Successfully authenticated for user ~p!", [User]),
-      erlang:send_after(?TIMEDIFF, self(), request, []),
+      erlang:send_after(0, self(), get_name, []),
       {noreply, maps:merge(State, Token)}
   end;
 handle_info(request, State) ->
   try
-    Data = get_stream(State),
-      case Data of
-        ok -> ok;
-        {error, Name, R} ->
-          lager:warning("Unknown data ~p:~p!",[Name, R]),
-          ok;
-        Other when is_map(Other)->
-          {ok, DeviceId} = maps:find(<<"coreid">>, Data),
-          location_store:register_location(DeviceId, Data)
-      end,
-    erlang:send_after(?TIMEDIFF, self(), request, []),
+    io:format("go~n"),
+    sse_process(State),
+%%    Data = get_stream(State),
+%%      case Data of
+%%        ok -> ok;
+%%        {error, Name, R} ->
+%%          lager:warning("Unknown data ~p:~p!",[Name, R]),
+%%          ok;
+%%        Other when is_map(Other)->
+%%          {ok, DeviceId} = maps:find(<<"coreid">>, Data),
+%%          case location_store:register_location(DeviceId, Data) of
+%%            ok ->
+%%              ok;
+%%            _ ->
+%%              lager:error("Error during storing data ~p", [{DeviceId, Data}])
+%%          end
+%%      end,
+%%    erlang:send_after(?TIMEDIFF, self(), request, []),
     {noreply, State}
   catch Err:Reason ->
     lager:error("Error during sending request ~p", [{Err, Reason}]),
     {stop, {Err, Reason}, State}
-  end.
+  end;
+handle_info(get_name, State) ->
+  [Devices] = list_devices(State),
+  {ok, Name} = maps:find(<<"name">>, Devices),
+  location_store:set_device_name(Name),
+  erlang:send_after(?TIMEDIFF, self(), request, []),
+  {noreply, State}.
 
 terminate(Reason, State) ->
   ok.
@@ -73,7 +89,7 @@ get_token(User, Pass) ->
   Res = request(?TOKEN, "POST", AuthHeader ++ Accepted, [Body]),
   case has_status_code(Res, 200) of
     false ->
-      io:format("Bad Response!~n~p",[Res]),
+      lagger:error("Bad Response! ~p",[Res]),
       {error, badresponse, Res};
     true ->
       get_response_body_json(Res)
@@ -112,8 +128,7 @@ get_response_body_json(Response) ->
   {ok, {_, _, Body, _ , _}} = Response,
   tr_json:decode(Body).
 
-get_response_body_raw(Response) ->
-  {ok, {_, _, Body, _ , _}} = Response,
+get_response_body_raw(Body) ->
   BodyList = binary_to_list(Body),
   Stripped = re:replace(BodyList, "\\s+", "", [global,{return,list}]),
   Start = string:str(Stripped, "{\"data\":"),
@@ -135,7 +150,7 @@ create_accepted_headers() ->
     {<<"Accept">>, <<"application/x-www-form-urlencoded">>}].
 
 request(Path, Method, Headers, Body) ->
-  {ok, Pid} = fusco:start_link(?PARTICLE, []),
+  {ok, Pid} = fusco:start_link(?PARTICLE_HTTPS, []),
   R = fusco:request(Pid, Path, Method, Headers, Body, 5000),
   fusco:disconnect(Pid),
   R.
@@ -144,3 +159,30 @@ accessed_request(Path, Method, Headers, Body, TokenMap) ->
   {ok, AccessToken} = maps:find(<<"access_token">>, TokenMap),
   AccessedPath = list_to_binary(binary_to_list(Path) ++ "?access_token=" ++ binary_to_list(AccessToken)),
   request(AccessedPath, Method, Headers, Body).
+
+sse_process(State) ->
+  {ok, AccessToken} = maps:find(<<"access_token">>, State),
+  AccessedPath = binary_to_list(?EVENTS) ++ "?access_token=" ++ binary_to_list(AccessToken),
+  {ok, Conn} = shotgun:open(?PARTICLE, 443, https),
+  Fun = fun handle_event/3,
+  Options = #{async => true, async_data => sse, async_mode => sse, handle_event => Fun},
+  {ok, Ref} = shotgun:get(Conn, AccessedPath, #{}, Options).
+
+
+handle_event(_Fin, _Ref, Data) ->
+  io:format("received ~p~n", [Data]),
+  D = get_response_body_raw(Data),
+  case D of
+        ok -> ok;
+        {error, Name, R} ->
+          lager:warning("Unknown data ~p:~p!",[Name, R]),
+          ok;
+        Other when is_map(Other)->
+          {ok, DeviceId} = maps:find(<<"coreid">>, D),
+          case location_store:register_location(DeviceId, D) of
+            ok ->
+              ok;
+            _ ->
+              lager:error("Error during storing data ~p", [{DeviceId, D}])
+          end
+      end.

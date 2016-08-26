@@ -9,6 +9,7 @@
    [kernel,
     stdlib,
     cowboy,
+    shotgun,
     sasl,
     jsone,
     qdate,
